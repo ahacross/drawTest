@@ -6,41 +6,65 @@ import { SVG } from '@svgdotjs/svg.js'
 
 const drawing = ref()
 
+let isDragging = false
+let dragStartPoint = null
+let selectedPoints = []
+
+const points = []
+
 onMounted(() => {
   const draw = SVG().addTo(drawing.value).size('100vw', '100vh')
 
-  var predefinedPoints = [
-    { x: 100, y: 100 },
-    { x: 300, y: 100 },
-    { x: 200, y: 300 }
-  ]
+  for (let i = 0; i < 10; i++) {
+    const x = Math.floor(Math.random() * 800)
+    const y = Math.floor(Math.random() * 600)
+    points.push({
+      element: draw
+        .circle(10)
+        .move(x - 5, y - 5)
+        .fill('#f056'),
+      x,
+      y
+    })
+  }
 
-  // 미리 정의된 점들을 드로잉 영역에 찍기
-  predefinedPoints.forEach(function (point) {
-    draw.circle(10).attr({ cx: point.x, cy: point.y, fill: '#0f9' })
+  draw.node.addEventListener('mousedown', (e) => {
+    isDragging = true
+    selectedPoints = []
+    dragStartPoint = { x: e.offsetX, y: e.offsetY }
   })
 
-  // Snap 거리 임계값
-  var snapThreshold = 50
+  draw.node.addEventListener('mousemove', (e) => {
+    if (isDragging && dragStartPoint) {
+      const currentPoint = { x: e.offsetX, y: e.offsetY }
+      console.log(currentPoint)
 
-  // 사용자가 드로잉 영역 클릭 시 실행될 이벤트 리스너
-  draw.click(function (event) {
-    var clickPoint = { x: event.offsetX, y: event.offsetY }
-    var snapPoint = null
+      points.forEach((point) => {
+        if (
+          point.x >= Math.min(dragStartPoint.x, currentPoint.x) &&
+          point.x <= Math.max(dragStartPoint.x, currentPoint.x) &&
+          point.y >= Math.min(dragStartPoint.y, currentPoint.y) &&
+          point.y <= Math.max(dragStartPoint.y, currentPoint.y)
+        ) {
+          if (!selectedPoints.includes(point)) {
+            selectedPoints.push(point)
+            point.element.fill('#00f')
+          }
+        }
+      })
+    }
+  })
 
-    // 클릭 위치와 가장 가까운 미리 정의된 점 찾기
-    predefinedPoints.forEach(function (point) {
-      var distance = Math.sqrt(
-        Math.pow(point.x - clickPoint.x, 2) + Math.pow(point.y - clickPoint.y, 2)
-      )
-      if (distance < snapThreshold) {
-        snapPoint = point
+  draw.node.addEventListener('mouseup', () => {
+    if (selectedPoints.length > 1) {
+      for (let i = 0; i < selectedPoints.length - 1; i++) {
+        draw
+          .line(dragStartPoint.x, dragStartPoint.y, selectedPoints[i].x, selectedPoints[i].y)
+          .stroke({ width: 2, color: '#000' })
       }
-    })
-
-    // Snap 포인트가 있으면 그 포인트에, 없으면 클릭 위치에 점 찍기
-    var finalPoint = snapPoint ? snapPoint : clickPoint
-    draw.circle(10).attr({ cx: finalPoint.x, cy: finalPoint.y, fill: '#f06' })
+    }
+    isDragging = false
+    dragStartPoint = null
   })
 })
 </script>
