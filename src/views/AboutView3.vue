@@ -23,7 +23,6 @@
 
 <script setup>
 import { SVG } from '@svgdotjs/svg.js'
-import { ref, reactive, onMounted, nextTick } from 'vue'
 
 const svgContainer = ref(null)
 const rows = reactive([
